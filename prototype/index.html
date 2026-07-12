@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>家药箱 v11 · 提醒优先 · 季度药箱报告</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1c2421; --ink-soft: #5c6b64; --paper: #f3f0ea;
+      --card: rgba(255,252,247,.95); --line: rgba(28,36,33,.09);
+      --teal: #0d5c4d; --teal-deep: #094438; --mint: #d8efe8;
+      --coral: #b5453a; --amber: #b07a1a; --ok: #2a6b4a;
+      --phone-w: 390px; --phone-h: 844px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px; padding: 22px 12px;
+      font-family: "Manrope", system-ui, sans-serif; color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 0%, #3d5a52 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, #2a4038 0%, transparent 50%), #1a2220;
+    }
+    .hint { color: rgba(255,255,255,.72); font-size: 13px; text-align: center; max-width: 400px; line-height: 1.5; }
+    .hint strong { color: #fff; } .hint a { color: #b8e0d4; }
+    .phone {
+      width: var(--phone-w); height: var(--phone-h); border-radius: 44px; overflow: hidden; position: relative;
+      background: var(--paper);
+      box-shadow: 0 0 0 11px #121816, 0 0 0 13px #3a4742, 0 40px 80px rgba(0,0,0,.45);
+    }
+    .screen {
+      display: none; flex-direction: column; height: 100%; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(243,240,234,.94) 0%, #f3f0ea 55%), url("./atmosphere.png") center top / cover no-repeat;
+    }
+    .screen.active { display: flex; animation: fadeUp .28s ease both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .status-bar { height: 46px; padding: 14px 24px 0; display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+    .content { flex: 1; overflow-y: auto; padding: 2px 14px 96px; -webkit-overflow-scrolling: touch; }
+    .content.no-tab { padding-bottom: 26px; }
+    .brand { font-family: "Fraunces", Georgia, serif; font-weight: 700; letter-spacing: -.02em; }
+    .nav-title { font-size: 16px; font-weight: 650; text-align: center; padding: 0 40px 10px; position: relative; }
+    .back {
+      position: absolute; left: 0; top: -2px; border: 1px solid var(--line); background: var(--card);
+      width: 34px; height: 34px; border-radius: 11px; color: var(--teal); cursor: pointer; font-size: 18px; font-family: inherit;
+    }
+    .btn {
+      display: flex; align-items: center; justify-content: center; width: 100%; min-height: 48px; border-radius: 14px;
+      font-size: 14.5px; font-weight: 650; font-family: inherit; cursor: pointer; border: none; margin-bottom: 9px; padding: 0 12px;
+    }
+    .btn-primary { background: linear-gradient(180deg, #12705e, var(--teal-deep)); color: #fff; }
+    .btn-secondary { background: #fff; color: var(--teal); border: 1.5px solid rgba(13,92,77,.25); }
+    .btn-ghost { background: none; color: var(--ink-soft); height: auto; min-height: 34px; font-weight: 500; font-size: 13.5px; }
+    .btn-danger { background: #f8ebe9; color: var(--coral); }
+    .home-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .home-top h2 { font-size: 22px; line-height: 1.15; }
+    .home-sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 3px; }
+    .badge { display: inline-flex; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--mint); color: var(--teal-deep); margin-left: 4px; vertical-align: middle; }
+    .badge.local { background: #e8e3d9; color: var(--ink-soft); }
+    .chip-btn { border: 0; background: var(--ink); color: #fff; font-size: 12px; font-weight: 650; font-family: inherit; padding: 8px 12px; border-radius: 999px; cursor: pointer; }
+    .chip-row { display: flex; gap: 7px; }
+    .chip-row .chip-btn { white-space: nowrap; }
+    .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; }
+    .section-title { font-size: 11px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); margin: 4px 0 7px; }
+    .today-panel {
+      background: linear-gradient(180deg, rgba(255,252,247,.98), rgba(232,242,237,.96));
+      border: 1px solid rgba(13,92,77,.16); border-radius: 20px; padding: 12px; margin-bottom: 12px;
+      box-shadow: 0 16px 35px rgba(13,68,56,.10);
+    }
+    .today-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+    .today-head h3 { font-family: "Fraunces", serif; font-size: 23px; color: var(--teal-deep); line-height: 1; }
+    .today-head p { color: var(--ink-soft); font-size: 11.5px; margin-top: 4px; }
+    .small-actions { display: flex; flex-direction: column; gap: 6px; min-width: 92px; }
+    .small-actions .mini { background: #fff; }
+    .dose-card {
+      display: flex; gap: 10px; align-items: center; width: 100%;
+      background: rgba(255,255,255,.74); border: 1px solid var(--line); border-radius: 14px;
+      padding: 10px; margin-bottom: 8px; text-align: left; font-family: inherit; color: inherit;
+    }
+    .dose-pack { width: 48px; height: 48px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #f3f1ec; border: 1px solid var(--line); }
+    .dose-pack img { width: 100%; height: 100%; object-fit: contain; display: block; background: #f7f5f0; }
+    .dose-body { flex: 1; min-width: 0; }
+    .dose-time { font-size: 12px; font-weight: 750; color: var(--teal-deep); }
+    .dose-name { font-family: "Fraunces", serif; font-size: 15px; font-weight: 700; margin-top: 2px; }
+    .dose-meta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; line-height: 1.35; }
+    .dose-card.taken, .dose-card.skipped { opacity: .48; }
+    .dose-actions { display: flex; gap: 5px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 118px; }
+    .mini { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 5px 8px; font-size: 11px; font-weight: 650; font-family: inherit; cursor: pointer; color: inherit; }
+    .mini.primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .mini.danger { color: var(--coral); background: #fbf1ef; }
+    .mini.soft { background: var(--mint); color: var(--teal-deep); border-color: transparent; }
+    .search {
+      display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line);
+      border-radius: 13px; padding: 0 12px; height: 40px; margin-bottom: 8px;
+    }
+    .search input { border: 0; outline: none; flex: 1; font-size: 13.5px; font-family: inherit; background: transparent; }
+    .tags { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 8px; scrollbar-width: none; }
+    .tags::-webkit-scrollbar { display: none; }
+    .tag {
+      flex-shrink: 0; background: #fff; border: 1px solid var(--line); border-radius: 999px;
+      padding: 5px 10px; font-size: 11.5px; font-weight: 500; font-family: inherit; cursor: pointer;
+    }
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+    .stat { background: var(--card); border-radius: 12px; padding: 8px 4px; text-align: center; border: 1px solid var(--line); }
+    .stat .n { font-family: "Fraunces", serif; font-size: 20px; font-weight: 700; line-height: 1; }
+    .stat.expired .n { color: var(--coral); } .stat.soon .n { color: var(--amber); } .stat.ok .n { color: var(--ok); }
+    .stat .l { font-size: 10px; color: var(--ink-soft); margin-top: 3px; }
+    .sort-row { display: flex; justify-content: space-between; margin: 0 2px 8px; font-size: 11.5px; color: var(--ink-soft); }
+    .sort-row strong { color: var(--ink); }
+    .med-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .med-card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+      padding: 8px; cursor: pointer; text-align: left; font-family: inherit; color: inherit;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .pack {
+      width: 100%; height: 108px; border-radius: 10px; overflow: hidden;
+      background: #f3f1ec; border: 1px solid var(--line);
+    }
+    .pack img, .detail-pack img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: #f7f5f0; }
+    .med-card .name { font-family: "Fraunces", serif; font-size: 14px; font-weight: 700; line-height: 1.2; letter-spacing: -.02em; }
+    .med-card .inds { font-size: 11px; font-weight: 650; color: var(--teal-deep); line-height: 1.35; }
+    .med-card .exp-line {
+      margin-top: auto; padding-top: 2px; font-size: 11px; font-weight: 700;
+      display: flex; justify-content: space-between; align-items: baseline; gap: 4px;
+    }
+    .ok { color: var(--ok); } .soon { color: var(--amber); } .expired { color: var(--coral); }
+    .med-card .qty { font-size: 11px; font-weight: 650; color: var(--ink-soft); }
+    .detail-pack {
+      width: 100%; height: 180px; border-radius: 14px; margin-bottom: 12px;
+      overflow: hidden; background: #f3f1ec; border: 1px solid var(--line);
+    }
+    .tabbar {
+      position: absolute; left: 10px; right: 10px; bottom: 12px; height: 58px;
+      background: rgba(255,253,249,.95); backdrop-filter: blur(14px); border: 1px solid var(--line);
+      border-radius: 18px; display: flex; padding: 4px; box-shadow: 0 10px 28px rgba(28,36,33,.12);
+    }
+    .tab {
+      flex: 1; border: 0; background: transparent; border-radius: 14px; font-family: inherit;
+      font-size: 10.5px; font-weight: 650; color: var(--ink-soft); cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    }
+    .tab.active { background: var(--mint); color: var(--teal-deep); }
+    .detail-hero { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 10px; }
+    .detail-hero .name { font-family: "Fraunces", serif; font-size: 24px; margin-bottom: 8px; }
+    .tag-wrap { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .mini-tag { font-size: 11px; font-weight: 650; padding: 3px 8px; border-radius: 7px; background: #eef3f1; color: var(--ink-soft); }
+    .mini-tag.crowd { background: #e7f0fb; color: #2a5f8f; }
+    .mini-tag.route { background: var(--mint); color: var(--teal-deep); }
+    .mini-tag.form { background: #f3eadc; color: #8a5a20; }
+    .path-box { padding: 10px 12px; border-radius: 12px; background: #f0f5f2; font-size: 13px; font-weight: 650; color: var(--teal-deep); margin-bottom: 10px; }
+    .path-box small { display: block; font-size: 11px; font-weight: 500; color: var(--ink-soft); margin-bottom: 2px; }
+    .kv { display: grid; grid-template-columns: 64px 1fr; gap: 7px 8px; font-size: 13px; }
+    .kv .k { color: var(--ink-soft); } .kv .v { font-weight: 650; }
+    .take-panel { background: linear-gradient(180deg, #eef8f4, #e4f2ec); border: 1px solid rgba(13,92,77,.15); border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+    .take-panel h4 { font-size: 13px; font-weight: 750; color: var(--teal-deep); margin-bottom: 8px; }
+    .take-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
+    .qty-ctrl { display: flex; align-items: center; gap: 8px; }
+    .qty-btn { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--line); background: #fff; font-size: 16px; font-family: inherit; cursor: pointer; }
+    .qty-num { min-width: 22px; text-align: center; font-weight: 750; }
+    .field-select, .field {
+      width: 100%; min-height: 42px; border: 1px solid var(--line); border-radius: 11px; padding: 0 12px;
+      font-size: 13.5px; font-family: inherit; background: #fff; margin-top: 6px; color: var(--ink);
+    }
+    .field { padding: 0 12px; }
+    .disclaimer { font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; margin-bottom: 10px; }
+    .result {
+      width: 100%; background: var(--card); border-radius: 14px; padding: 12px; margin-bottom: 7px; border: 1px solid var(--line);
+      text-align: left; font-family: inherit; color: inherit; cursor: pointer;
+    }
+    .result-row { display: flex; gap: 12px; align-items: center; }
+    .result-body { flex: 1; min-width: 0; }
+    .pack-thumb { width: 64px !important; height: 64px !important; flex-shrink: 0; border-radius: 8px; }
+    .result .r-name { font-family: "Fraunces", serif; font-size: 18px; font-weight: 700; }
+    .result .r-inds { font-size: 12px; font-weight: 650; color: var(--teal-deep); margin-top: 4px; }
+    .result .r-exp { font-size: 12px; font-weight: 700; margin-top: 4px; }
+    .scan-frame {
+      margin: 8px 0 12px; height: 200px; border-radius: 20px; background: linear-gradient(160deg, #1c2a26, #0f1614);
+      position: relative; cursor: pointer; display: grid; place-items: center;
+    }
+    .scan-frame::before { content: ""; position: absolute; inset: 34px; border: 1.5px solid rgba(184,224,212,.45); border-radius: 12px; }
+    .scan-frame p { color: #e8f5f1; font-size: 13.5px; text-align: center; z-index: 1; }
+    .form-card { background: var(--card); border-radius: 16px; padding: 2px 12px; border: 1px solid var(--line); margin-bottom: 10px; }
+    .form-row {
+      display: flex; justify-content: space-between; align-items: center; padding: 11px 0;
+      border-bottom: 1px solid var(--line); font-size: 13.5px; gap: 8px;
+    }
+    .form-row:last-child { border-bottom: 0; }
+    .form-row .k { color: var(--ink-soft); } .form-row .v { font-weight: 650; text-align: right; }
+    .unit-pills, .time-pills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+    .unit-pill, .time-pill { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-family: inherit; cursor: pointer; }
+    .unit-pill.on, .time-pill.on { background: var(--mint); border-color: rgba(13,92,77,.25); color: var(--teal-deep); font-weight: 700; }
+    .menu-list { background: var(--card); border-radius: 16px; border: 1px solid var(--line); overflow: hidden; margin-bottom: 10px; }
+    .menu-item {
+      width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 13px;
+      border: 0; border-bottom: 1px solid var(--line); background: transparent; font-family: inherit;
+      font-size: 13.5px; font-weight: 650; cursor: pointer; text-align: left; color: inherit;
+    }
+    .menu-item:last-child { border-bottom: 0; }
+    .menu-item .sub { display: block; font-size: 11px; font-weight: 500; color: var(--ink-soft); margin-top: 2px; }
+    .member { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 9px; margin-bottom: 6px; }
+    .avatar { width: 38px; height: 38px; border-radius: 11px; background: var(--mint); color: var(--teal-deep); display: grid; place-items: center; font-weight: 750; font-family: "Fraunces", serif; }
+    .member-info { flex: 1; } .member-info .n { font-weight: 750; font-size: 13.5px; } .member-info .d { font-size: 11px; color: var(--ink-soft); }
+    .invite-code {
+      text-align: center; font-family: "Fraunces", serif; font-size: 28px; font-weight: 700; letter-spacing: .16em;
+      padding: 12px; background: linear-gradient(180deg, #fff, var(--mint)); border-radius: 14px;
+      border: 1px dashed rgba(13,92,77,.35); margin: 4px 0 9px; color: var(--teal-deep);
+    }
+    label.field-label { display: block; font-size: 11px; font-weight: 750; color: var(--ink-soft); margin: 10px 0 5px; letter-spacing: .04em; text-transform: uppercase; }
+    .empty-block { text-align: center; padding: 22px 8px 4px; }
+    .empty-block .mark, .hero-login .mark { margin: 0 auto 10px; border-radius: 14px; background: var(--mint); display: grid; place-items: center; font-family: "Fraunces", serif; color: var(--teal-deep); }
+    .empty-block .mark { width: 52px; height: 52px; font-size: 20px; }
+    .empty-block h2, .hero-login h1 { font-family: "Fraunces", serif; margin-bottom: 5px; }
+    .empty-block p, .hero-login p { color: var(--ink-soft); font-size: 13px; line-height: 1.45; margin-bottom: 16px; }
+    .hero-login { text-align: center; padding: 24px 8px 16px; }
+    .hero-login .mark { width: 58px; height: 58px; font-size: 22px; }
+    .toast {
+      position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%) translateY(8px);
+      background: var(--ink); color: #fff; padding: 9px 12px; border-radius: 11px; font-size: 12px;
+      opacity: 0; pointer-events: none; transition: .25s ease; max-width: 88%; text-align: center; z-index: 40;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .plan-card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 15px;
+      padding: 12px; margin-bottom: 8px; font-size: 13px;
+    }
+    .plan-title { display: flex; align-items: center; gap: 8px; font-weight: 750; }
+    .plan-title img { width: 38px; height: 38px; object-fit: contain; background: #f7f5f0; border: 1px solid var(--line); border-radius: 8px; }
+    .plan-meta { color: var(--ink-soft); font-size: 12px; margin-top: 6px; line-height: 1.45; }
+    .report-hero {
+      background: linear-gradient(160deg, #0d5c4d, #16372f 58%, #efe7d8);
+      color: #fff; border-radius: 24px; padding: 18px; margin-bottom: 10px; box-shadow: 0 18px 40px rgba(13,68,56,.22);
+    }
+    .report-hero .eyebrow { font-size: 11px; opacity: .74; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .report-hero .big { font-family: "Fraunces", serif; font-size: 48px; font-weight: 700; line-height: .95; margin: 10px 0 4px; }
+    .report-hero .big span { font-size: 20px; }
+    .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .report-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+    .report-card .n { font-family: "Fraunces", serif; font-size: 30px; line-height: 1; font-weight: 700; }
+    .report-card .l { font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; line-height: 1.35; }
+    .list-line { font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); }
+    .share-card {
+      min-height: 620px; border-radius: 30px; padding: 24px 22px;
+      background:
+        radial-gradient(circle at 24% 8%, rgba(216,239,232,.8), transparent 34%),
+        linear-gradient(180deg, #fffcf7 0%, #eef2ec 58%, #0d5c4d 100%);
+      border: 1px solid rgba(13,92,77,.18); box-shadow: 0 24px 60px rgba(13,68,56,.22);
+      display: flex; flex-direction: column; color: var(--ink);
+    }
+    .share-card .topline { font-size: 12px; font-weight: 750; color: var(--teal-deep); letter-spacing: .08em; text-transform: uppercase; }
+    .share-card h1 { font-family: "Fraunces", serif; font-size: 36px; line-height: 1.04; margin: 16px 0 12px; letter-spacing: -.03em; }
+    .share-number { font-family: "Fraunces", serif; font-size: 76px; color: var(--teal-deep); line-height: .9; }
+    .share-pill { background: rgba(255,255,255,.75); border: 1px solid rgba(13,92,77,.14); border-radius: 18px; padding: 12px; margin-top: 10px; }
+    .share-pill strong { font-family: "Fraunces", serif; font-size: 25px; color: var(--teal-deep); }
+    .share-foot { margin-top: auto; color: rgba(255,255,255,.78); font-size: 12px; line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <p class="hint">
+    <strong>家药箱 v11</strong> · 提醒优先 · 季度药箱报告<br />
+    <a href="http://localhost:8765/prototype/">强制刷新打开</a>
+  </p>
+
+  <div class="phone">
+    <section class="screen active" id="p05">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="home-top">
+          <div>
+            <h2 class="brand" id="home-title">我的药箱<span class="badge local">本机</span></h2>
+            <div class="home-sub" id="home-sub">提醒优先 · 包装照找药</div>
+          </div>
+          <button class="chip-btn" onclick="go('p06')">＋ 添加</button>
+        </div>
+
+        <section class="today-panel" id="today-doses">
+          <div class="today-head">
+            <div>
+              <h3 id="today-title">今日待服 0</h3>
+              <p>确认服用会同步扣减库存</p>
+            </div>
+            <div class="small-actions">
+              <button class="mini soft" onclick="go('p18')">管理计划</button>
+              <button class="mini primary" onclick="go('p19')">＋ 提醒</button>
+            </div>
+          </div>
+          <div id="today-dose-list"></div>
+        </section>
+
+        <div class="search">
+          <span>⌕</span>
+          <input id="search-input" placeholder="搜药名或适应症…" onkeydown="if(event.key==='Enter')searchMed()" />
+        </div>
+        <div class="tags">
+          <button class="tag" onclick="searchMed('腹泻')">腹泻</button>
+          <button class="tag" onclick="searchMed('感冒')">感冒</button>
+          <button class="tag" onclick="searchMed('发烧')">发烧</button>
+          <button class="tag" onclick="searchMed('儿童')">儿童</button>
+          <button class="tag" onclick="searchMed('外用')">外用</button>
+        </div>
+        <div class="stats">
+          <div class="stat expired"><div class="n" id="n-expired">0</div><div class="l">过期</div></div>
+          <div class="stat soon"><div class="n" id="n-soon">0</div><div class="l">临期</div></div>
+          <div class="stat ok"><div class="n" id="n-ok">0</div><div class="l">安全</div></div>
+        </div>
+        <div class="sort-row"><span>全部药品 · <strong id="med-count">0</strong></span><span>点击查看并取用</span></div>
+        <div class="med-grid" id="med-grid"></div>
+      </div>
+      <nav class="tabbar">
+        <button class="tab active" onclick="go('p05')"><span>⌂</span>药品</button>
+        <button class="tab" onclick="go('p09')"><span>◎</span>我的</button>
+      </nav>
+    </section>
+
+    <section class="screen" id="p18">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p05')">‹</button>管理计划</div>
+        <div class="panel">
+          <div class="brand" style="font-size:22px">进行中提醒</div>
+          <p class="disclaimer" style="margin-top:6px">结束计划后，今天和之后的待服提醒不再出现；已确认记录保留。</p>
+        </div>
+        <div id="plan-list"></div>
+        <button class="btn btn-primary" onclick="go('p19')">＋ 新建提醒</button>
+      </div>
+    </section>
+
+    <section class="screen" id="p19">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p05')">‹</button>新建提醒</div>
+        <label class="field-label">选择药品</label>
+        <select class="field-select" id="plan-med"></select>
+        <label class="field-label">每次用量</label>
+        <div class="take-row" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px">
+          <span class="qty-ctrl">
+            <button type="button" class="qty-btn" onclick="changePlanAmt(-1)">−</button>
+            <span class="qty-num" id="plan-amt">1</span>
+            <button type="button" class="qty-btn" onclick="changePlanAmt(1)">＋</button>
+            <span id="plan-unit" style="font-size:12px;color:var(--ink-soft)">袋</span>
+          </span>
+        </div>
+        <label class="field-label">提醒钟点（可多选）</label>
+        <div class="time-pills" id="plan-times">
+          <button type="button" class="time-pill on" data-t="08:00" onclick="togglePlanTime(this)">08:00</button>
+          <button type="button" class="time-pill" data-t="12:00" onclick="togglePlanTime(this)">12:00</button>
+          <button type="button" class="time-pill on" data-t="14:00" onclick="togglePlanTime(this)">14:00</button>
+          <button type="button" class="time-pill" data-t="18:00" onclick="togglePlanTime(this)">18:00</button>
+          <button type="button" class="time-pill on" data-t="20:00" onclick="togglePlanTime(this)">20:00</button>
+        </div>
+        <label class="field-label">连续天数</label>
+        <select class="field-select" id="plan-days">
+          <option value="3">3 天</option>
+          <option value="5">5 天</option>
+          <option value="7" selected>7 天</option>
+          <option value="14">14 天</option>
+          <option value="30">30 天</option>
+        </select>
+        <label class="field-label">给谁（可选）</label>
+        <input class="field" id="plan-who" placeholder="如：孩子、妈妈、我" value="孩子" />
+        <label class="field-label">因何事（可选）</label>
+        <input class="field" id="plan-why" placeholder="如：感冒、换季过敏" value="感冒" />
+        <p class="disclaimer" style="margin-top:12px">请按说明书或医嘱设置。这里不提供剂量建议。</p>
+        <button class="btn btn-primary" onclick="savePlan()">保存计划并生成今日待服</button>
+      </div>
+    </section>
+
+    <section class="screen" id="p11">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" id="detail-back" onclick="go('p05')">‹</button>药品详情</div>
+        <div class="detail-hero" id="detail-hero"></div>
+        <div class="take-panel" id="take-panel"></div>
+        <p class="disclaimer">请按说明书或医嘱服用。本原型只记录库存，不构成医疗建议。</p>
+      </div>
+    </section>
+
+    <section class="screen" id="p06">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p05')">‹</button>添加药品</div>
+        <div class="scan-frame" onclick="go('p07')"><p>对准药盒条码<br /><span style="opacity:.65;font-size:12px">点按模拟识别</span></p></div>
+        <button class="btn btn-ghost" onclick="go('p07')">改为拍照识别</button>
+      </div>
+    </section>
+
+    <section class="screen" id="p07">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p06')">‹</button>确认信息</div>
+        <div class="form-card">
+          <div class="form-row"><span class="k">药品名称</span><span class="v" style="font-family:Fraunces,serif">小儿氨酚黄那敏</span></div>
+          <div class="form-row"><span class="k">适应症</span><span class="v">感冒 · 发热</span></div>
+          <div class="form-row"><span class="k">地点 / 药箱</span><span class="v">客厅药柜 · 儿童药箱</span></div>
+          <div class="form-row"><span class="k">有效期至</span><span class="v">2027-05-20</span></div>
+          <div class="form-row">
+            <span class="k">数量</span>
+            <span class="v qty-ctrl">
+              <button type="button" class="qty-btn" onclick="changeFormQty(-1)">−</button>
+              <span class="qty-num" id="form-qty">10</span>
+              <button type="button" class="qty-btn" onclick="changeFormQty(1)">＋</button>
+              <span id="form-unit-label" style="font-size:12px;color:var(--ink-soft)">袋</span>
+            </span>
+          </div>
+          <div class="form-row"><span class="k">单位</span>
+            <span class="v unit-pills">
+              <button type="button" class="unit-pill on" onclick="setFormUnit(this,'袋')">袋</button>
+              <button type="button" class="unit-pill" onclick="setFormUnit(this,'盒')">盒</button>
+            </span>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveHome()">保存</button>
+      </div>
+    </section>
+
+    <section class="screen" id="p08">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p05')">‹</button>找药结果</div>
+        <div class="panel">正在找：<span class="brand" id="query-text" style="font-size:18px;color:var(--teal)">感冒</span></div>
+        <div id="results"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="p09">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="home-top"><div><h2 class="brand">我的</h2><div class="home-sub">账号、家庭与季度报告</div></div></div>
+        <div class="section-title">功能</div>
+        <div class="menu-list">
+          <button class="menu-item" onclick="go('p06')"><span>添加药品<span class="sub">扫码录入</span></span><span>›</span></button>
+          <button class="menu-item" onclick="go('p18')"><span>管理提醒计划<span class="sub">结束进行中的用药提醒</span></span><span>›</span></button>
+          <button class="menu-item" onclick="go('p20')"><span>家庭药箱季报<span class="sub">囤药、过期、浪费与分享卡</span></span><span>›</span></button>
+        </div>
+        <div class="section-title">账号与家庭</div>
+        <div class="menu-list">
+          <button class="menu-item" onclick="go('p01')"><span>登录账号<span class="sub" id="login-hint">可稍后</span></span><span>›</span></button>
+          <button class="menu-item" onclick="openFamilyGate()"><span>家庭与成员管理<span class="sub" id="family-hint">邀请 / 移除</span></span><span>›</span></button>
+        </div>
+      </div>
+      <nav class="tabbar">
+        <button class="tab" onclick="go('p05')"><span>⌂</span>药品</button>
+        <button class="tab active" onclick="go('p09')"><span>◎</span>我的</button>
+      </nav>
+    </section>
+
+    <section class="screen" id="p20">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p09')">‹</button>家庭药箱季报</div>
+        <div id="report-content"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="p21">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p20')">‹</button>分享卡</div>
+        <div id="share-card-wrap"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="p01">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p09')">‹</button>登录</div>
+        <div class="hero-login"><div class="mark">药</div><h1>登录后可同步</h1><p>开通家庭共享前需先登录</p></div>
+        <button class="btn btn-primary" onclick="doLogin()">通过 Apple 登录</button>
+        <button class="btn btn-secondary" onclick="doLogin()">手机号登录</button>
+        <button class="btn btn-ghost" onclick="go('p09')">暂时跳过</button>
+      </div>
+    </section>
+
+    <section class="screen" id="p02">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p09')">‹</button>家庭共享</div>
+        <div class="empty-block"><div class="mark">家</div><h2>和家人共用药箱</h2><p>药品、提醒和季报可以一起同步。</p></div>
+        <button class="btn btn-primary" onclick="go('p03')">创建家庭药箱</button>
+        <button class="btn btn-secondary" onclick="go('p04')">输入邀请码加入</button>
+      </div>
+    </section>
+
+    <section class="screen" id="p03">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p02')">‹</button>创建家庭</div>
+        <label class="field-label">家庭名称</label>
+        <input class="field" id="family-name" value="张家药箱" />
+        <button class="btn btn-primary" onclick="createFamily()">创建并管理成员</button>
+      </div>
+    </section>
+
+    <section class="screen" id="p04">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p02')">‹</button>加入家庭</div>
+        <div class="invite-code">482916</div>
+        <button class="btn btn-primary" onclick="joinFamily()">确认加入</button>
+      </div>
+    </section>
+
+    <section class="screen" id="p10">
+      <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+      <div class="content no-tab">
+        <div class="nav-title"><button class="back" onclick="go('p09')">‹</button>家庭与成员</div>
+        <div class="panel">
+          <div style="font-size:11px;color:var(--ink-soft);font-weight:750">当前家庭</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+            <div class="brand" id="family-manage-title" style="font-size:20px">张家药箱</div>
+            <button class="mini" onclick="renameFamily()">改名</button>
+          </div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:4px" id="member-count-label">成员</div>
+        </div>
+        <div class="section-title">成员管理</div>
+        <div id="member-list"></div>
+        <div class="invite-code">482916</div>
+        <button class="btn btn-primary" onclick="toast('邀请码已复制')">复制邀请码</button>
+        <button class="btn btn-danger" onclick="leaveFamily()">退出家庭共享</button>
+      </div>
+    </section>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    const TODAY = "2026-07-12";
+    const todayDate = new Date(TODAY + "T00:00:00");
+    let loggedIn = false, familyName = null, formQty = 10, formUnit = "袋";
+    let takeAmount = 1, detailId = null, detailBack = "p05", planAmt = 1;
+
+    let members = [
+      { id: "me", name: "张三", note: "我 · 创建者", me: true, initial: "张" },
+      { id: "m2", name: "李四", note: "配偶", me: false, initial: "李" },
+      { id: "m3", name: "张母", note: "父母", me: false, initial: "母" },
+    ];
+
+    const places = { living: { name: "客厅药柜" }, fridge: { name: "冰箱冷藏" } };
+    const cabinets = {
+      c1: { placeId: "living", name: "儿童药箱" },
+      c2: { placeId: "living", name: "感冒冲剂箱" },
+      c3: { placeId: "living", name: "外用消毒箱" },
+      c4: { placeId: "living", name: "成人常备箱" },
+      c5: { placeId: "fridge", name: "冷藏专用盒" },
+    };
+
+    let meds = [
+      { id: 1, cabinetId: "c1", name: "布洛芬混悬滴剂", packImg: "packs/pack-01-meilin.png", crowd: "儿童", route: "内服", form: "液体", efficacy: ["退烧","止痛","发烧"], expiry: "2026-08-01", qty: 8, unit: "次" },
+      { id: 2, cabinetId: "c1", name: "小儿氨酚黄那敏", packImg: "packs/pack-02-xiaoer.png", crowd: "儿童", route: "内服", form: "冲剂", efficacy: ["感冒","发热"], expiry: "2027-05-20", qty: 8, unit: "袋" },
+      { id: 3, cabinetId: "c1", name: "蒙脱石散", packImg: "packs/pack-03-smecta.png", crowd: "儿童", route: "内服", form: "散剂", efficacy: ["腹泻"], expiry: "2027-08-15", qty: 6, unit: "袋" },
+      { id: 4, cabinetId: "c2", name: "连花清瘟颗粒", packImg: "packs/pack-04-lianhua.png", crowd: "成人", route: "内服", form: "冲剂", efficacy: ["感冒","发热"], expiry: "2027-11-20", qty: 12, unit: "袋" },
+      { id: 5, cabinetId: "c2", name: "板蓝根颗粒", packImg: "packs/pack-05-banlangen.png", crowd: "成人", route: "内服", form: "冲剂", efficacy: ["感冒"], expiry: "2026-09-12", qty: 10, unit: "袋" },
+      { id: 6, cabinetId: "c2", name: "小柴胡颗粒", packImg: "packs/pack-06-xiaochaihu.png", crowd: "成人", route: "内服", form: "冲剂", efficacy: ["感冒","发热"], expiry: "2027-02-01", qty: 6, unit: "袋" },
+      { id: 7, cabinetId: "c3", name: "创可贴", packImg: "packs/pack-07-bandaid.png", crowd: "通用", route: "外用", form: "贴剂", efficacy: ["外伤"], expiry: "2028-01-20", qty: 20, unit: "贴" },
+      { id: 8, cabinetId: "c3", name: "碘伏棉棒", packImg: "packs/pack-08-iodine.png", crowd: "通用", route: "外用", form: "消毒", efficacy: ["外伤","消毒"], expiry: "2027-04-08", qty: 1, unit: "盒" },
+      { id: 9, cabinetId: "c3", name: "红霉素软膏", packImg: "packs/pack-09-erythromycin.png", crowd: "通用", route: "外用", form: "膏剂", efficacy: ["皮肤"], expiry: "2026-12-30", qty: 1, unit: "支" },
+      { id: 10, cabinetId: "c4", name: "布洛芬缓释胶囊", packImg: "packs/pack-10-fenbid.png", crowd: "成人", route: "内服", form: "胶囊", efficacy: ["止痛","退烧"], expiry: "2026-07-28", qty: 10, unit: "粒" },
+      { id: 11, cabinetId: "c4", name: "氯雷他定片", packImg: "packs/pack-11-loratadine.png", crowd: "成人", route: "内服", form: "片剂", efficacy: ["过敏"], expiry: "2027-06-30", qty: 6, unit: "片" },
+      { id: 12, cabinetId: "c4", name: "维生素C片", packImg: "packs/pack-12-vitaminc.png", crowd: "成人", route: "内服", form: "片剂", efficacy: ["维生素"], expiry: "2028-03-01", qty: 30, unit: "片" },
+      { id: 13, cabinetId: "c5", name: "整肠生", packImg: "packs/pack-13-zhengchangsheng.png", crowd: "成人", route: "内服", form: "胶囊", efficacy: ["腹泻","肠道菌群"], expiry: "2027-03-01", qty: 24, unit: "粒" },
+      { id: 14, cabinetId: "c5", name: "左氧氟沙星滴眼液", packImg: "packs/pack-14-eyedrops.png", crowd: "通用", route: "外用", form: "滴眼液", efficacy: ["眼部"], expiry: "2026-05-10", qty: 1, unit: "支" },
+      { id: 15, cabinetId: "c5", name: "开塞露", packImg: "packs/pack-15-kaisailu.png", crowd: "通用", route: "外用", form: "液体", efficacy: ["便秘"], expiry: "2026-12-01", qty: 3, unit: "支" },
+    ];
+
+    let plans = [
+      { id: "pl1", medId: 1, amount: 1, unit: "次", times: ["08:00","20:00"], days: 7, status: "active", tagWho: "孩子", tagWhy: "感冒", start: "2026-07-09" },
+      { id: "pl2", medId: 2, amount: 1, unit: "袋", times: ["08:00","14:00","20:00"], days: 7, status: "active", tagWho: "孩子", tagWhy: "感冒", start: "2026-07-09" },
+    ];
+    let doses = [
+      { id: "d1", planId: "pl1", medId: 1, date: "2026-07-12", time: "08:00", status: "pending", amount: 1, unit: "次" },
+      { id: "d2", planId: "pl2", medId: 2, date: "2026-07-12", time: "08:00", status: "taken", amount: 1, unit: "袋" },
+      { id: "d3", planId: "pl2", medId: 2, date: "2026-07-12", time: "14:00", status: "pending", amount: 1, unit: "袋" },
+      { id: "d4", planId: "pl1", medId: 1, date: "2026-07-12", time: "20:00", status: "pending", amount: 1, unit: "次" },
+      { id: "d5", planId: "pl2", medId: 2, date: "2026-07-12", time: "20:00", status: "pending", amount: 1, unit: "袋" },
+    ];
+
+    const price = {
+      "儿童退烧": 38, "感冒": 26, "外伤": 18, "腹泻": 32, "过敏": 24,
+      "止痛": 22, "维生素": 35, "眼部": 28, "皮肤": 16, "便秘": 12, "默认": 20,
+    };
+
+    function medById(id) { return meds.find(m => m.id === Number(id)); }
+    function planById(id) { return plans.find(p => p.id === id); }
+    function parseDate(s) { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+    function daysLeft(expiry) { return Math.ceil((parseDate(expiry) - todayDate) / 86400000); }
+    function statusOf(expiry) {
+      const d = daysLeft(expiry);
+      if (d < 0) return "expired";
+      if (d <= 30) return "soon";
+      return "ok";
+    }
+    function todayStr() { return TODAY; }
+    function qtyText(m) { return `${m.qty} ${m.unit}`; }
+    function indsText(m) { return m.efficacy.join(" · "); }
+    function packHTML(m, mode) {
+      const cls = mode === "detail" ? "detail-pack" : mode === "thumb" ? "pack pack-thumb" : "pack";
+      return `<div class="${cls}"><img src="${m.packImg}" alt="${m.name}包装" loading="lazy" /></div>`;
+    }
+    function timingText(expiry) {
+      const d = daysLeft(expiry);
+      if (d < 0) return `已过期 ${Math.abs(d)} 天`;
+      if (d === 0) return "今天到期";
+      if (d <= 30) return `临期 · 还剩 ${d} 天`;
+      return `有效至 ${expiry.slice(2)}`;
+    }
+    function expFull(expiry) {
+      const s = statusOf(expiry);
+      const d = daysLeft(expiry);
+      if (s === "expired") return `有效期至 ${expiry}（已过期 ${Math.abs(d)} 天）`;
+      if (s === "soon") return `有效期至 ${expiry}（还剩 ${d} 天）`;
+      return `有效期至 ${expiry}`;
+    }
+    function pathOf(m) {
+      const cab = cabinets[m.cabinetId];
+      return `${places[cab.placeId].name} · ${cab.name}`;
+    }
+    function doseStatusLabel(s) {
+      return { pending: "待服", taken: "已服", skipped: "已跳过", snoozed: "稍后" }[s] || s;
+    }
+    function tagText(plan) {
+      return [plan?.tagWho, plan?.tagWhy].filter(Boolean).join(" · ");
+    }
+    function activePlanDoses() {
+      return doses.filter(d => {
+        const p = planById(d.planId);
+        return d.date === todayStr() && p && p.status === "active";
+      }).sort((a, b) => a.time.localeCompare(b.time));
+    }
+    function pendingToday() {
+      return activePlanDoses().filter(d => d.status === "pending" || d.status === "snoozed");
+    }
+
+    function renderDoseCard(d, compact) {
+      const p = planById(d.planId);
+      const m = medById(d.medId);
+      const action = (d.status === "pending" || d.status === "snoozed") && p?.status === "active"
+        ? `<div class="dose-actions">
+            <button type="button" class="mini primary" onclick="event.stopPropagation();confirmDose('${d.id}')">确认</button>
+            <button type="button" class="mini" onclick="event.stopPropagation();snoozeDose('${d.id}')">稍后</button>
+            <button type="button" class="mini" onclick="event.stopPropagation();skipDose('${d.id}')">跳过</button>
+          </div>`
+        : `<div class="dose-actions"><span class="mini">${doseStatusLabel(d.status)}</span></div>`;
+      return `<div class="dose-card ${d.status}">
+        <div class="dose-pack">${m ? `<img src="${m.packImg}" alt="" />` : ""}</div>
+        <div class="dose-body">
+          <div class="dose-time">${d.time} · ${doseStatusLabel(d.status)}</div>
+          <div class="dose-name">${m ? m.name : "未知药品"}</div>
+          <div class="dose-meta">${d.amount} ${d.unit}${tagText(p) ? ` · <span class="badge local">${tagText(p)}</span>` : ""}${compact ? "" : ""}</div>
+        </div>
+        ${action}
+      </div>`;
+    }
+
+    function renderHome() {
+      const pending = pendingToday();
+      const todayBox = document.getElementById("today-doses");
+      todayBox.style.display = "";
+      if (pending.length) {
+        document.getElementById("today-title").textContent = `今日待服 ${pending.length}`;
+        document.querySelector("#today-doses .today-head p").textContent = "确认服用会同步扣减库存";
+        document.getElementById("today-dose-list").innerHTML = pending.map(d => renderDoseCard(d)).join("");
+      } else {
+        document.getElementById("today-title").textContent = "今日暂无待服";
+        document.querySelector("#today-doses .today-head p").textContent = "可先建提醒；找药仍在下方";
+        document.getElementById("today-dose-list").innerHTML = `<p class="disclaimer" style="margin:0">没有进行中的钟点提醒。点右上「＋ 提醒」添加。</p>`;
+      }
+
+      const sorted = [...meds].sort((a, b) => a.name.localeCompare(b.name, "zh"));
+      document.getElementById("med-grid").innerHTML = sorted.map(m => {
+        const s = statusOf(m.expiry);
+        return `<button type="button" class="med-card" onclick="openDetail(${m.id},'p05')">
+          ${packHTML(m)}
+          <div class="name">${m.name}</div>
+          <div class="inds">${indsText(m)}</div>
+          <div class="exp-line ${s}">
+            <span>${timingText(m.expiry)}</span>
+            <span class="qty">${qtyText(m)}</span>
+          </div>
+        </button>`;
+      }).join("");
+
+      const counts = { ok: 0, soon: 0, expired: 0 };
+      meds.forEach(m => counts[statusOf(m.expiry)]++);
+      document.getElementById("n-expired").textContent = counts.expired;
+      document.getElementById("n-soon").textContent = counts.soon;
+      document.getElementById("n-ok").textContent = counts.ok;
+      document.getElementById("med-count").textContent = meds.length;
+      updateModeUI();
+    }
+
+    function renderPlans() {
+      const active = plans.filter(p => p.status === "active");
+      document.getElementById("plan-list").innerHTML = active.length ? active.map(p => {
+        const m = medById(p.medId);
+        return `<div class="plan-card">
+          <div class="plan-title">${m ? `<img src="${m.packImg}" alt="" />` : ""}<span>${m ? m.name : "未知药品"} · 每次 ${p.amount} ${p.unit}</span></div>
+          <div class="plan-meta">${p.times.join(" / ")} · 连续 ${p.days} 天 · 自 ${p.start}<br />${tagText(p) ? `轻标签：${tagText(p)}` : "未填写轻标签"}</div>
+          <button class="mini danger" style="margin-top:10px" onclick="endPlan('${p.id}')">结束计划</button>
+        </div>`;
+      }).join("") : `<div class="empty-block"><div class="mark">✓</div><h2>暂无进行中计划</h2><p>新建提醒后，今日待服会自动出现在首页上方。</p></div>`;
+    }
+
+    function preparePlanForm() {
+      planAmt = 1;
+      const sel = document.getElementById("plan-med");
+      if (!sel) return;
+      sel.innerHTML = meds.map(m => `<option value="${m.id}">${m.name}</option>`).join("");
+      document.getElementById("plan-amt").textContent = "1";
+      const first = meds[0];
+      document.getElementById("plan-unit").textContent = first ? first.unit : "份";
+      sel.onchange = () => {
+        const m = medById(sel.value);
+        if (m) document.getElementById("plan-unit").textContent = m.unit;
+      };
+      document.querySelectorAll("#plan-times .time-pill").forEach(x => {
+        x.classList.toggle("on", ["08:00","14:00","20:00"].includes(x.dataset.t));
+      });
+    }
+    function changePlanAmt(d) {
+      planAmt = Math.max(1, planAmt + d);
+      document.getElementById("plan-amt").textContent = planAmt;
+    }
+    function togglePlanTime(el) { el.classList.toggle("on"); }
+    function savePlan() {
+      const medId = Number(document.getElementById("plan-med").value);
+      const m = medById(medId);
+      if (!m) { toast("请选择药品"); return; }
+      const times = [...document.querySelectorAll("#plan-times .time-pill.on")].map(x => x.dataset.t);
+      if (!times.length) { toast("请至少选一个钟点"); return; }
+      const days = Number(document.getElementById("plan-days").value);
+      const tagWho = document.getElementById("plan-who").value.trim();
+      const tagWhy = document.getElementById("plan-why").value.trim();
+      const id = "pl" + Date.now();
+      const plan = { id, medId, amount: planAmt, unit: m.unit, times, days, status: "active", tagWho, tagWhy, start: todayStr() };
+      plans.push(plan);
+      times.forEach((t, i) => doses.push({
+        id: "d" + Date.now() + "-" + i + "-" + t.replace(":", ""),
+        planId: id, medId, date: todayStr(), time: t, status: "pending", amount: planAmt, unit: m.unit,
+      }));
+      toast("提醒已保存，今日待服已生成");
+      go("p05");
+    }
+    function endPlan(id) {
+      const p = planById(id);
+      if (!p) return;
+      p.status = "done";
+      doses.forEach(d => {
+        if (d.planId === id && (d.status === "pending" || d.status === "snoozed")) d.status = "skipped";
+      });
+      toast("计划已结束，待服提醒已停止");
+      renderPlans();
+    }
+
+    function confirmDose(doseId) {
+      const d = doses.find(x => x.id === doseId);
+      if (!d || d.status === "taken") return;
+      const p = planById(d.planId);
+      if (!p || p.status !== "active") return;
+      const m = medById(d.medId);
+      if (!m || m.qty <= 0) { toast("库存不足"); return; }
+      const n = Math.min(d.amount, m.qty);
+      m.qty -= n;
+      d.status = "taken";
+      if (m.qty <= 0) meds = meds.filter(x => x.id !== m.id);
+      toast("已确认服用，库存已扣减");
+      renderHome();
+    }
+    function skipDose(doseId) {
+      const d = doses.find(x => x.id === doseId);
+      if (!d) return;
+      d.status = "skipped";
+      toast("已跳过，未扣库存");
+      renderHome();
+    }
+    function snoozeDose(doseId) {
+      const d = doses.find(x => x.id === doseId);
+      if (!d) return;
+      d.status = "snoozed";
+      toast("已设为稍后提醒");
+      renderHome();
+    }
+
+    function openDetail(id, back) {
+      detailId = id; detailBack = back || "p05"; takeAmount = 1;
+      const m = medById(id);
+      if (!m) return;
+      const s = statusOf(m.expiry);
+      document.getElementById("detail-back").onclick = () => go(detailBack);
+      document.getElementById("detail-hero").innerHTML = `
+        ${packHTML(m, "detail")}
+        <div class="name">${m.name}</div>
+        <div class="tag-wrap">
+          <span class="mini-tag crowd">${m.crowd}</span>
+          <span class="mini-tag route">${m.route}</span>
+          <span class="mini-tag form">${m.form}</span>
+          ${m.efficacy.map(e => `<span class="mini-tag">${e}</span>`).join("")}
+        </div>
+        <div class="path-box"><small>存放位置</small>${pathOf(m)}</div>
+        <div class="kv">
+          <div class="k">适应症</div><div class="v">${indsText(m)}</div>
+          <div class="k">库存</div><div class="v">${qtyText(m)}</div>
+          <div class="k">效期</div><div class="v ${s}">${expFull(m.expiry)}</div>
+        </div>`;
+      const canTake = s !== "expired" && m.qty > 0;
+      document.getElementById("take-panel").innerHTML = canTake ? `
+        <h4>确认后取用</h4>
+        <div class="take-row">
+          <span style="font-size:13px;color:var(--ink-soft)">本次取用</span>
+          <span class="qty-ctrl">
+            <button type="button" class="qty-btn" onclick="changeTake(-1)">−</button>
+            <span class="qty-num" id="take-qty">1</span>
+            <button type="button" class="qty-btn" onclick="changeTake(1)">＋</button>
+            <span style="font-size:12px;color:var(--ink-soft)">${m.unit}</span>
+          </span>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="confirmTake()">确认取用</button>
+        <button class="btn btn-ghost" onclick="go(detailBack)">先不取</button>
+      ` : `
+        <h4>暂不可取用</h4>
+        <p class="disclaimer">${s === "expired" ? "已过期，请勿服用。" : "库存为 0。"}</p>
+        <button class="btn btn-secondary" onclick="go(detailBack)">返回</button>`;
+      go("p11");
+    }
+    function changeTake(d) {
+      const m = medById(detailId);
+      if (!m) return;
+      takeAmount = Math.max(1, Math.min(m.qty, takeAmount + d));
+      document.getElementById("take-qty").textContent = takeAmount;
+    }
+    function confirmTake() {
+      const m = medById(detailId);
+      if (!m || statusOf(m.expiry) === "expired") return;
+      const n = Math.min(takeAmount, m.qty);
+      m.qty -= n;
+      toast(`已取用 ${n} ${m.unit}`);
+      if (m.qty <= 0) {
+        meds = meds.filter(x => x.id !== m.id);
+        go("p05");
+        return;
+      }
+      openDetail(m.id, detailBack);
+    }
+
+    function searchMed(preset) {
+      const q = preset || document.getElementById("search-input").value.trim() || "感冒";
+      document.getElementById("query-text").textContent = q;
+      const matched = meds.filter(m => {
+        const blob = [m.name, m.crowd, m.route, m.form, ...m.efficacy].join(" ");
+        if (q === "儿童") return m.crowd === "儿童";
+        if (q === "外用") return m.route === "外用";
+        return blob.includes(q);
+      });
+      document.getElementById("results").innerHTML = matched.length ? matched.map(m => {
+        const s = statusOf(m.expiry);
+        return `<button type="button" class="result" onclick="openDetail(${m.id},'p08')">
+          <div class="result-row">
+            ${packHTML(m, "thumb")}
+            <div class="result-body">
+              <div class="r-name">${m.name}</div>
+              <div class="r-inds">${indsText(m)} · ${qtyText(m)}</div>
+              <div class="r-exp ${s}">${timingText(m.expiry)}</div>
+            </div>
+          </div>
+        </button>`;
+      }).join("") : `<p class="disclaimer">没有匹配结果。</p>`;
+      go("p08");
+    }
+
+    function estimatePrice(m) {
+      if (m.crowd === "儿童" && (m.efficacy.includes("退烧") || m.efficacy.includes("发烧"))) return price["儿童退烧"];
+      if (m.efficacy.includes("感冒") || m.efficacy.includes("发热")) return price["感冒"];
+      if (m.efficacy.includes("外伤") || m.efficacy.includes("消毒")) return price["外伤"];
+      if (m.efficacy.includes("腹泻")) return price["腹泻"];
+      if (m.efficacy.includes("过敏")) return price["过敏"];
+      if (m.efficacy.includes("止痛") || m.efficacy.includes("退烧")) return price["止痛"];
+      if (m.efficacy.includes("维生素")) return price["维生素"];
+      if (m.efficacy.includes("眼部")) return price["眼部"];
+      if (m.efficacy.includes("皮肤")) return price["皮肤"];
+      if (m.efficacy.includes("便秘")) return price["便秘"];
+      return price["默认"];
+    }
+    function reportData() {
+      const expired = meds.filter(m => statusOf(m.expiry) === "expired");
+      const soon = meds.filter(m => statusOf(m.expiry) === "soon");
+      const percentile = Math.min(99, 40 + meds.length * 2);
+      const waste = expired.reduce((sum, m) => sum + estimatePrice(m), 0) + soon.reduce((sum, m) => sum + Math.round(estimatePrice(m) * .6), 0);
+      const hasChildFever = meds.some(m => m.crowd === "儿童" && (m.efficacy.includes("退烧") || m.efficacy.includes("发烧")));
+      const hasWound = meds.some(m => m.efficacy.includes("外伤") || m.efficacy.includes("消毒"));
+      const hasCold = meds.some(m => m.efficacy.includes("感冒"));
+      const blind = [
+        hasChildFever ? "" : "儿童退烧",
+        hasWound ? "" : "外伤处理",
+        hasCold ? "" : "感冒常备",
+      ].filter(Boolean);
+      return { count: meds.length, expired, soon, percentile, waste, blind };
+    }
+    function renderReport() {
+      const r = reportData();
+      document.getElementById("report-content").innerHTML = `
+        <div class="report-hero">
+          <div class="eyebrow">Quarterly Cabinet Report</div>
+          <div class="big">${r.count}<span> 种</span></div>
+          <div style="font-weight:750">您家囤药击败约 ${r.percentile}% 家庭</div>
+          <p style="font-size:12px;opacity:.78;line-height:1.45;margin-top:8px">分位与金额为原型估算，用于提醒定期检查药箱。</p>
+        </div>
+        <div class="report-grid">
+          <div class="report-card"><div class="n expired">${r.expired.length}</div><div class="l">已过期：存在失效或误服风险，建议尽快整理。</div></div>
+          <div class="report-card"><div class="n soon">${r.soon.length}</div><div class="l">临期：30 天内到期，优先检查是否还需要。</div></div>
+          <div class="report-card"><div class="n">¥${r.waste}</div><div class="l">预计浪费金额：按品类均价粗略估算。</div></div>
+          <div class="report-card"><div class="n">${r.blind.length}</div><div class="l">类目盲区：${r.blind.length ? r.blind.join("、") : "儿童退烧 / 外伤 / 感冒均有覆盖"}。</div></div>
+        </div>
+        <div class="panel">
+          <div class="section-title">实用下一步</div>
+          <p class="list-line"><strong>过期药：</strong>${r.expired.length ? r.expired.map(m => m.name).join("、") : "暂无"}</p>
+          <p class="list-line"><strong>临期药：</strong>${r.soon.length ? r.soon.map(m => m.name).join("、") : "暂无"}</p>
+        </div>
+        <button class="btn btn-primary" onclick="showShareCard()">生成分享卡</button>
+        <p class="disclaimer">免责：本报告不构成医疗建议；分位与金额为估算示意。过期药请按当地规范处理。</p>`;
+    }
+    function showShareCard() {
+      const r = reportData();
+      document.getElementById("share-card-wrap").innerHTML = `
+        <div class="share-card">
+          <div class="topline">家药箱季度体检</div>
+          <h1>您家囤了<br /><span class="share-number">${r.count}</span> 种药</h1>
+          <div style="font-size:18px;font-weight:750;color:var(--teal-deep)">击败约 ${r.percentile}% 家庭</div>
+          <div class="share-pill"><strong>${r.expired.length}</strong> 种已过期有风险</div>
+          <div class="share-pill"><strong>${r.soon.length}</strong> 种临期 · 预计浪费 ¥${r.waste}</div>
+          <div class="share-pill">类目盲区：${r.blind.length ? r.blind.join(" / ") : "常见场景覆盖完整"}</div>
+          <div class="share-foot">不构成医疗建议 · 分位与金额为估算<br />家药箱 v11 · 提醒优先</div>
+        </div>
+        <p class="disclaimer" style="margin-top:10px">原型内展示竖版海报卡片，可直接截图分享。</p>`;
+      go("p21");
+    }
+
+    function updateModeUI() {
+      document.getElementById("home-title").innerHTML = familyName
+        ? `${familyName}<span class="badge">家庭</span>`
+        : `我的药箱<span class="badge local">本机</span>`;
+      document.getElementById("home-sub").textContent = `${meds.length} 种药 · 今日待服 ${pendingToday().length}`;
+      document.getElementById("login-hint").textContent = loggedIn ? "已登录" : "可稍后";
+      document.getElementById("family-hint").textContent = familyName ? `管理「${familyName}」` : "邀请 / 移除";
+    }
+    function renderMembers() {
+      document.getElementById("member-count-label").textContent = `${members.length} 位成员`;
+      document.getElementById("member-list").innerHTML = members.map(m => `
+        <div class="member">
+          <div class="avatar">${m.initial}</div>
+          <div class="member-info"><div class="n">${m.name}${m.me?"（我）":""}</div><div class="d">${m.note}</div></div>
+          ${m.me ? `<button class="mini">本人</button>` : `<button class="mini danger" onclick="removeMember('${m.id}')">移除</button>`}
+        </div>`).join("");
+    }
+    function removeMember(id) {
+      const m = members.find(x => x.id === id);
+      if (!m || !confirm(`移除「${m.name}」？`)) return;
+      members = members.filter(x => x.id !== id); renderMembers(); toast(`已移除 ${m.name}`);
+    }
+    function renameFamily() {
+      const next = prompt("家庭名称", familyName || "张家药箱");
+      if (!next || !next.trim()) return;
+      familyName = next.trim();
+      document.getElementById("family-manage-title").textContent = familyName;
+      updateModeUI();
+    }
+    function doLogin() { loggedIn = true; toast("已登录"); updateModeUI(); go("p09"); }
+    function openFamilyGate() {
+      if (!loggedIn) { toast("请先登录"); go("p01"); return; }
+      familyName ? go("p10") : go("p02");
+    }
+    function createFamily() {
+      familyName = document.getElementById("family-name").value.trim() || "张家药箱";
+      document.getElementById("family-manage-title").textContent = familyName;
+      members = [{ id: "me", name: "张三", note: "我 · 创建者", me: true, initial: "张" }];
+      updateModeUI(); go("p10");
+    }
+    function joinFamily() {
+      familyName = "张家药箱";
+      document.getElementById("family-manage-title").textContent = familyName;
+      updateModeUI(); go("p10");
+    }
+    function leaveFamily() {
+      if (!confirm("确定退出？")) return;
+      familyName = null; toast("已退出"); updateModeUI(); go("p09");
+    }
+    function changeFormQty(d) {
+      formQty = Math.max(1, formQty + d);
+      document.getElementById("form-qty").textContent = formQty;
+    }
+    function setFormUnit(el, unit) {
+      formUnit = unit;
+      document.getElementById("form-unit-label").textContent = unit;
+      document.querySelectorAll(".unit-pill").forEach(x => x.classList.remove("on"));
+      el.classList.add("on");
+    }
+    function saveHome() {
+      meds.push({
+        id: Date.now(), cabinetId: "c1", name: "小儿氨酚黄那敏",
+        packImg: "packs/pack-02-xiaoer.png",
+        crowd: "儿童", route: "内服", form: "冲剂", efficacy: ["感冒","发热"],
+        expiry: "2027-05-20", qty: formQty, unit: formUnit,
+      });
+      toast("已保存");
+      go("p05");
+    }
+    function go(id) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      if (id === "p05") renderHome();
+      if (id === "p18") renderPlans();
+      if (id === "p19") preparePlanForm();
+      if (id === "p20") renderReport();
+      if (id === "p07") {
+        formQty = 10; formUnit = "袋";
+        document.getElementById("form-qty").textContent = formQty;
+        document.getElementById("form-unit-label").textContent = formUnit;
+      }
+      if (id === "p10") renderMembers();
+    }
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg; el.classList.add("show");
+      clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove("show"), 1800);
+    }
+
+    renderHome();
+  </script>
+</body>
+</html>
