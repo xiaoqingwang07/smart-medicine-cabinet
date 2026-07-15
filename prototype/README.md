@@ -4,6 +4,18 @@
 
 ## 如何打开
 
+### 手机 / 任意设备（推荐）
+
+在浏览器中打开：
+
+**https://cdn.jsdelivr.net/gh/xiaoqingwang07/smart-medicine-cabinet@gh-pages/index.html**
+
+（已部署到 `gh-pages` 分支，可点击交互。）
+
+若希望使用 `https://xiaoqingwang07.github.io/smart-medicine-cabinet/`，需在 GitHub 仓库 **Settings → Pages** 中将 Source 设为 `gh-pages` 分支、根目录 `/`。
+
+### 电脑本地
+
 1. 在 Finder 中进入本目录，双击 `index.html`；或
 2. 将 `index.html` 拖入 Chrome / Safari / Firefox。
 
