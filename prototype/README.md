@@ -6,13 +6,15 @@
 
 ### 手机 / 任意设备（推荐）
 
-在浏览器中打开：
+在浏览器中打开（**请用下面这个链接，不要用 jsdelivr**）：
 
-**https://cdn.jsdelivr.net/gh/xiaoqingwang07/smart-medicine-cabinet@gh-pages/index.html**
+**https://htmlpreview.github.io/?https://github.com/xiaoqingwang07/smart-medicine-cabinet/blob/gh-pages/index.html**
 
-（已部署到 `gh-pages` 分支，可点击交互。）
+> 说明：jsdelivr / raw 链接会把 HTML 当成「代码文本」显示，手机上看就是一堆源码。上面这个链接才会正常渲染成界面。
 
-若希望使用 `https://xiaoqingwang07.github.io/smart-medicine-cabinet/`，需在 GitHub 仓库 **Settings → Pages** 中将 Source 设为 `gh-pages` 分支、根目录 `/`。
+（原型文件在 `gh-pages` 分支。）
+
+若希望使用固定短链 `https://xiaoqingwang07.github.io/smart-medicine-cabinet/`，需在 GitHub 仓库 **Settings → Pages** 中：Source 选 **Deploy from a branch**，Branch 选 **gh-pages**，文件夹 **/ (root)**，保存后等 1–2 分钟。
 
 ### 电脑本地
 
