@@ -4,6 +4,20 @@
 
 ## 如何打开
 
+### 手机 / 任意设备（推荐）
+
+在浏览器中打开（**请用下面这个链接，不要用 jsdelivr**）：
+
+**https://htmlpreview.github.io/?https://github.com/xiaoqingwang07/smart-medicine-cabinet/blob/gh-pages/index.html**
+
+> 说明：jsdelivr / raw 链接会把 HTML 当成「代码文本」显示，手机上看就是一堆源码。上面这个链接才会正常渲染成界面。
+
+（原型文件在 `gh-pages` 分支。）
+
+若希望使用固定短链 `https://xiaoqingwang07.github.io/smart-medicine-cabinet/`，需在 GitHub 仓库 **Settings → Pages** 中：Source 选 **Deploy from a branch**，Branch 选 **gh-pages**，文件夹 **/ (root)**，保存后等 1–2 分钟。
+
+### 电脑本地
+
 1. 在 Finder 中进入本目录，双击 `index.html`；或
 2. 将 `index.html` 拖入 Chrome / Safari / Firefox。
 
